@@ -144,7 +144,8 @@ if __name__ == "__main__":
 
             #line = line + ",".join([str(x) for x in bools])
 
-            line = ["/".join( [str(x) for x in routeList] )] + [cost] + bools
+            #line = ["/".join( [str(x) for x in routeList] )] + [cost] + bools
+            line = [routeList] + [cost] + bools
 
             w.writerow(line)
 
