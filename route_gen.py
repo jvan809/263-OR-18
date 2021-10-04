@@ -136,6 +136,9 @@ if __name__ == "__main__":
 
     with open('routes.csv', 'w', newline='') as f:
         w = csv.writer(f)
+        
+        
+
         for cluster in listofClusters:
             routeList, cost = groupToRoute(cluster,times)
             #line = "/".join([str(x) for x in routeList]) + ',' + str(cost) + ','
