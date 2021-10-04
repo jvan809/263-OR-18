@@ -23,8 +23,15 @@ routeVars = LpVariable.dicts("Routes", routes, cat='Binary')
 prob  = LpProblem("Minimising_Costs_Problem", LpMinimize)
 prob += lpSum([routeVars[i]*costs[i]] for i in routes)
 
-# the total number of routs <= 60 because there are only 60 trucks
+# the total number of routes <= 60 because there are only 60 trucks
 prob += lpSum(routeVars[i] for i in routes) <= 60
+
+# adding the demand constraints
+i = 0
+for store in stores:
+    prob += lpSum([routeVars[i]*globals()["%s"%store][i]] for i in routes) >= demand[i]
+    i += 1
+
 
 # adding the demand requirements for each store
 # for store in stores:
