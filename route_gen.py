@@ -7,6 +7,7 @@ import csv
 
 def enRoutes(times, demands):
     dist = 55 # index of the hub
+    
     fromDist = copy(times[dist]) # times to get to places from the distribution hub
     maxDemand = 26 # might be changed to add tolerances to problem or consider larger clusters
     cutOffTime = 6000
@@ -14,7 +15,7 @@ def enRoutes(times, demands):
 
     numNodes = len(times)
     # add zero demand for dist center to make things eaiser
-    demands = np.insert(demands, 55, 0)
+    demands = np.insert(demands, dist, 0)
 
     route = 0
     nodeRoutes = [-1]*numNodes
@@ -110,6 +111,8 @@ def routeCost(route,times):
 
 
 if __name__ == "__main__":
+    dist = 55
+    routesToGen = 300 # will slightly overshoot (10-15 routes)
     timedata = np.genfromtxt("WoolworthsTravelDurations.csv", delimiter = ',')[1:,1:]
     
     demands = np.genfromtxt("WoolworthsDemands.csv", delimiter = ",")[1:,1]
@@ -127,24 +130,21 @@ if __name__ == "__main__":
 
     pyplot.show()
 
-
-    for i in range(10):
+    i = 0
+    while len(listofClusters) < routesToGen:
         _, cluster = enRoutes(times,demands)
         listofClusters += cluster
         #print(max(routes))
         print(i)
+        i += 1
 
     with open('routes.csv', 'w', newline='') as f:
         w = csv.writer(f)
         for cluster in listofClusters:
             routeList, cost = groupToRoute(cluster,times)
-            #line = "/".join([str(x) for x in routeList]) + ',' + str(cost) + ','
-            bools = [ (i in cluster) for i in range(numStores)]
+            bools = [ (i in cluster) for i in range(numStores) if i != dist] # checks for every store if it is in the route or not
             #print(  [ i for i in range(len(times)) if bools[i] ]  ) # checking if bool conversion worked like I thought it did
 
-            #line = line + ",".join([str(x) for x in bools])
-
-            #line = ["/".join( [str(x) for x in routeList] )] + [cost] + bools
             line = [routeList] + [cost] + bools
 
             w.writerow(line)
@@ -154,7 +154,8 @@ if __name__ == "__main__":
             bools = [False]*numStores
             bools[i] = True
             line = ["!!"+str(i)] + [10**5] + bools
-            w.writerow(line)
+            if i != dist:
+                w.writerow(line)
 
 
 
