@@ -3,7 +3,10 @@ from numpy.lib import genfromtxt
 from matplotlib import cm, pyplot
 from copy import copy
 from random import choices
+import pandas as pd
 import csv
+
+
 
 def enRoutes(times, demands):
     dist = 55 # index of the hub
@@ -65,6 +68,7 @@ def enRoutes(times, demands):
 
     return nodeRoutes, metalist
 
+
         
 def groupToRoute(nodes, times):
     # nodes - list of ints
@@ -94,10 +98,7 @@ def groupToRoute(nodes, times):
 
     return route, mincost
 
-
-        
-
-        
+            
 
 def routeCost(route,times):
     cost = 0
@@ -108,11 +109,10 @@ def routeCost(route,times):
     return cost
 
 
-
-
-if __name__ == "__main__":
+  
+def generate(n):    
     dist = 55
-    routesToGen = 300 # will slightly overshoot (10-15 routes)
+    routesToGen = n # will slightly overshoot (10-15 routes)
     timedata = np.genfromtxt("WoolworthsTravelDurations.csv", delimiter = ',')[1:,1:]
     
     demands = np.genfromtxt("WoolworthsDemands.csv", delimiter = ",")[1:,1]
@@ -141,7 +141,12 @@ if __name__ == "__main__":
     with open('routes.csv', 'w', newline='') as f:
         w = csv.writer(f)
         
-        
+        # writing the header line that includes the name of all the stores
+        df = pd.read_csv("demandestimations.csv")
+        line = list(df['Store'])
+        line.insert(0,'route')
+        line.insert(1,'cost')
+        w.writerow(line)
 
         for cluster in listofClusters:
             routeList, cost = groupToRoute(cluster,times)
@@ -154,30 +159,15 @@ if __name__ == "__main__":
 
         # safety valve
         for i in range(numStores):
-            bools = [False]*numStores
-            bools[i] = True
+            
+            bools = [False]*(numStores-1)
+            if i < 55: bools[i] = True
+            else: bools[i-1] = True
             line = ["!!"+str(i)] + [10**5] + bools
             if i != dist:
                 w.writerow(line)
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    
-
-    
-
-
+if __name__ == "__main__":
+    generate(1000)
