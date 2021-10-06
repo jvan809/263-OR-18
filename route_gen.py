@@ -13,7 +13,7 @@ def enRoutes(times, demands):
     
     fromDist = copy(times[dist]) # times to get to places from the distribution hub
     maxDemand = 26 # might be changed to add tolerances to problem or consider larger clusters
-    cutOffTime = 6000
+    cutOffTime = 2000
     metalist = []
 
     numNodes = len(times)
@@ -44,8 +44,8 @@ def enRoutes(times, demands):
             #n = np.where(enRoute == np.amin(enRoute))[0][0]  # find node with shortest en route cost 
             # ^^ deterministic, gets stuck sometimes in weird places
 
-            # better random version
-            n = choices(range(numNodes), weights = [1/(cost - np.amin(enRoute) + 1) for cost in enRoute], k = 1 )[0]
+            # better random version - could change the exponent as a 'temp'
+            n = choices(range(numNodes), weights = [ (1/(cost - np.amin(enRoute) + 1))**1 for cost in enRoute], k = 1 )[0]
 
 
             if fromDist[n] and (totalDemand + demands[n] <= maxDemand): # don't consider visited nodes 
@@ -63,7 +63,7 @@ def enRoutes(times, demands):
         #print(nodes)
         #print(totalDemand)
         #print(groupToRoute(nodes,times))
-
+        nodes.sort()
         metalist.append(nodes)
 
     return nodeRoutes, metalist
@@ -113,6 +113,7 @@ def routeCost(route,times):
   
 def generate(n):    
     dist = 55
+    maxTries = 200
     routesToGen = n # will slightly overshoot (10-15 routes)
     timedata = np.genfromtxt("WoolworthsTravelDurations.csv", delimiter = ',')[1:,1:]
     
@@ -126,20 +127,44 @@ def generate(n):
 
     times = copy(timedata)
     numStores = len(times)
-    routes, listofClusters = enRoutes(times, demands)
+
     #print(max(routes))
-    pyplot.scatter(locs[:,0], locs[:,1], s= 40, c = routes, cmap='Set1')
+    #pyplot.scatter(locs[:,0], locs[:,1], s= 40, c = routes, cmap='Set1')
     # route as list, price, binary variables 
 
-    pyplot.show()
-
+    #pyplot.show()
     i = 0
-    while len(listofClusters) < routesToGen:
+
+    costs = []
+    routes = []
+    listofClusters = []
+
+    while len(routes) < routesToGen:
         _, cluster = enRoutes(times,demands)
-        listofClusters += cluster
-        #print(max(routes))
-        print(i)
+        nonDupeclusters = [c for c in cluster if (not (c in listofClusters))]
+        
+        for r in nonDupeclusters:
+            listofClusters.append(r)
+            if len(r) == 1:
+                continue # ignore routes that are just visiting one store and back
+
+            route, cost = groupToRoute(r,times) 
+            # add unloading times
+            totalDemand = sum([demands[n] for n in r])
+            cost += totalDemand*7.5*60
+
+            if cost <= 4*3600:
+                routes.append(route)
+                costs.append(cost)
+
         i += 1
+        if i%10 == 0:
+            print(len(routes))
+            if i > maxTries:
+                print("Maximum Tries Reached - Routes Generated: " + str(len(routes)))
+                break
+
+        
 
     with open('routes.csv', 'w', newline='') as f:
         w = csv.writer(f)
@@ -151,20 +176,15 @@ def generate(n):
         line.insert(1,'cost')
         w.writerow(line)
 
-        for cluster in listofClusters:
-            routeList, cost = groupToRoute(cluster,times)
-            # add unloading times
-            totalDemand = sum([demands[n] for n in cluster])
-            cost += totalDemand*7.5*60
 
+        for i in range(len(routes)):
 
-            bools = [ (i in cluster) for i in range(numStores) if i != dist] # checks for every store if it is in the route or not
+            bools = [ (x in routes[i]) for x in range(numStores) if x != dist] # checks for every store if it is in the route or not
             #print(  [ i for i in range(len(times)) if bools[i] ]  ) # checking if bool conversion worked like I thought it did
 
-            line = [routeList] + [cost] + bools
+            line = [routes[i]] + [costs[i]] + bools
 
             w.writerow(line)
-
         # safety valve
         for i in range(numStores):
             

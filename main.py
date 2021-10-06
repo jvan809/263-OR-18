@@ -8,8 +8,8 @@ df = pd.read_csv("demandestimations.csv")
 stores = list(df['Store'])
 
 # generating the routes
-n = 5000    # number of routes to generate
-generate(n)
+#n = 2000    # number of routes to generate
+#generate(n)
 
 # fetching the routes and their respective costs
 df = pd.read_csv("routes.csv")
@@ -40,7 +40,7 @@ prob  = LpProblem("Minimising_Costs_Problem", LpMinimize)
 prob += lpSum([routeVars[route]*costs[route]] for route in routes)
 
 # the total number of routes <= 60 because there are only 60 trucks
-prob += lpSum(routeVars[route] for route in routes) <= 70
+prob += lpSum(routeVars[route] for route in routes) <= 60
 
 # adding the constraints that each store can be visited only once
 for i, store in enumerate(stores):
@@ -52,11 +52,14 @@ prob.solve()
 # The status of the solution is printed to the screen
 print("Status:", LpStatus[prob.status])
 
+print("Total Number of Trucks Needed: " + str(lpSum(routeVars[route] for route in routes)))
+
 # Showing the chosen routes
 print("The chosen routes are:")
 for route in routes:
     if routeVars[route].value() == 1:
         print(route)
+        print(costs[route])
 
 # The optimised objective function value of Ingredients pue is printed to the screen    
 print("Total Cost of Distribution is $", value(prob.objective))
