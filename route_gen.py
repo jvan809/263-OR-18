@@ -17,8 +17,7 @@ def enRoutes(times, demands):
     metalist = []
 
     numNodes = len(times)
-    # add zero demand for dist center to make things eaiser
-    demands = np.insert(demands, dist, 0)
+
 
     route = 0
     nodeRoutes = [-1]*numNodes
@@ -118,6 +117,8 @@ def generate(n):
     timedata = np.genfromtxt("WoolworthsTravelDurations.csv", delimiter = ',')[1:,1:]
     
     demands = np.genfromtxt("WoolworthsDemands.csv", delimiter = ",")[1:,1]
+    # add zero demand for dist center to make things eaiser
+    demands = np.insert(demands, dist, 0)
     #print(times[55]) #check loading worked as expected
     #print(demands)
     locs = np.genfromtxt("WoolworthsLocations.csv", delimiter = ',')[1:,-2:]
