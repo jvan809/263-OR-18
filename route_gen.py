@@ -97,6 +97,7 @@ def groupToRoute(nodes, times):
         route = newRoute
         unvisited.pop(unvisited.index(newNode))
 
+
     return route, mincost
 
             
@@ -151,6 +152,11 @@ def generate(n):
 
         for cluster in listofClusters:
             routeList, cost = groupToRoute(cluster,times)
+            # add unloading times
+            totalDemand = sum([demands[n] for n in cluster])
+            cost += totalDemand*7.5*60
+
+
             bools = [ (i in cluster) for i in range(numStores) if i != dist] # checks for every store if it is in the route or not
             #print(  [ i for i in range(len(times)) if bools[i] ]  ) # checking if bool conversion worked like I thought it did
 
