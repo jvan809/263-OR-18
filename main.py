@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 from pulp import *
 from route_gen import *
+import csv
 
 def main(n, i):
     '''
@@ -61,21 +62,39 @@ def main(n, i):
     prob.solve()
 
     # The status of the solution is printed to the screen
-    print("Status:", LpStatus[prob.status])
+    print(str(i), " Status:", LpStatus[prob.status])
 
     # Showing the chosen routes
-    print("The chosen routes are:")
+    #print("The chosen routes are:")
     for route in routes:
         if routeVars[route].value() == 1:
-            print(route + ": $" + str(round(225*costs[route]/3600, 2)))
+            #print(route + ": $" + str(round(225*costs[route]/3600, 2)))
+            line = [route, round(225*costs[route]/3600, 2)]
+            w.writerow(line)
 
-    # The optimised objective function value of Ingredients pue is printed to the screen    
     cost = round(225*value(prob.objective)/3600, 2)
     print("Total Cost of Distribution is $", cost)
+    w.writerow(["Total Cost: ", cost])
 
 if __name__ == "__main__":
-    main(500, 6)
 
     # loop over all the days of the week to get solution per day.
-    for i in range(1,7):
-        main(500,i)
+
+        with open('results.csv', 'w', newline='') as f:
+            w = csv.writer(f)
+
+
+            for i in range(1,7):
+                # header Line
+                line = ['Route']
+                line.append('Cost ($)')
+                line.append(str(i))
+                w.writerow(line)
+
+                main(1000,i)
+
+
+
+
+
+    

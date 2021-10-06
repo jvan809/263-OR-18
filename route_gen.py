@@ -153,6 +153,7 @@ def generate(n, index):
             # add unloading times
             totalDemand = sum([demands[n] for n in r])
             cost += totalDemand*7.5*60
+            cost = np.ceil(cost/60)*60 # round up to the minute for payment - seems reasonable
 
             if cost <= 4*3600:
                 routes.append(route)
@@ -192,7 +193,7 @@ def generate(n, index):
             bools = [False]*(numStores-1)
             if i < 55: bools[i] = True
             else: bools[i-1] = True
-            line = ["!!"+str(i)] + [10**5] + bools
+            line = ["!!"+str(i)] + [1600000] + bools # $100,000 for easy determination of how many are used
             if i != dist:
                 w.writerow(line)
 
