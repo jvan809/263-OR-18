@@ -10,9 +10,15 @@ import csv
 
 
 def enRoutes(times, demands, start = -1):
-
+    # creates a partition (in the form of clusters) of a set of nodes obeying demand and timing data
     # Inputs:
+    #   times - array: costs for any node to node traversal
+    #   demands - vector array: demand of each store (all is index based so should match times)
     #   start - int: which node to start with (be default will start with the furthest node and work from there)
+    # outputs:
+    #   nodeRoutes - list: based on index which cluster each node belongs to (-1 for any unassinged)
+    #   metalist - list of lists: list of clusters generated
+    
     dist = 55 # index of the hub
     
     fromDist = copy(times[dist]) # times to get to places from the distribution hub
@@ -134,11 +140,17 @@ def routeCost(route,times):
 
   
 def generate(n, index, mode = 'w'):  
-
+    # generates a list of potential routes and writes to a csv with routes and costs
+    #
     # inputs:
     #   n - int: total number of routes to have at the end of the process
     #   index - int: which column of the demand data spreadsheet to use
     #   mode - either 'w' or 'w+' for creating a new sheet or appending
+    # Outputs:
+    #   writes to a csv file 'routes[index].csv' with routes (as a list), cost of the route (seconds), and then bools
+
+    # notes: 
+    #   using this in append mode will cause a siginificant spin-up period - maxtries may need to be increased to accomadate this.
 
 
     filename = 'routes' + str(index) + '.csv'
@@ -240,6 +252,7 @@ def generate(n, index, mode = 'w'):
 
 
 if __name__ == "__main__":
+    for i in range(1,7):
+        generate(1000, i)
+
     generate(1500, 4, 'w+')
-    #for i in range(1,7):
-    #    generate(1000, i)
