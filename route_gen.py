@@ -1,3 +1,4 @@
+import random
 import numpy as np
 from numpy.lib import genfromtxt
 from matplotlib import cm, pyplot
@@ -8,7 +9,10 @@ import csv
 
 
 
-def enRoutes(times, demands):
+def enRoutes(times, demands, start = -1):
+
+    # Inputs:
+    #   start - int: which node to start with (be default will start with the furthest node and work from there)
     dist = 55 # index of the hub
     
     fromDist = copy(times[dist]) # times to get to places from the distribution hub
@@ -26,6 +30,12 @@ def enRoutes(times, demands):
     while max(fromDist):
         # find the furthest point from the hub
         furthest = np.where(fromDist == np.amax(fromDist))[0][0]
+
+        if start >= 0:
+            furthest = start
+            start = -1
+
+
         nodes = [furthest]
         totalDemand = demands[furthest]
         route += 1
@@ -72,10 +82,15 @@ def enRoutes(times, demands):
 
         
 def groupToRoute(nodes, times):
-    # nodes - list of ints
+    # turns a unordered list of nodes into a ordered route
+    # Inputs:
+    #   nodes - list of ints: unordered cluster of nodes to find a route
+    #   times - numpy array: transit times 
+    # Outputs:
 
-    # cheapest insertion method
-    # meant for small groups
+    # Notes:
+    #   cheapest insertion method
+    #   meant for small groups
 
     currentNode = 55 # distribution center
     route = [currentNode]
@@ -103,6 +118,12 @@ def groupToRoute(nodes, times):
             
 
 def routeCost(route,times):
+    # Determines the total cost of a proposed route
+    # Inputs:
+    #   route - list: ordered list of nodes that makes up the route
+    #   times - array: transit times for every store to every other store 
+    # Outputs:
+    #   cost - float: total time taken to traverse this route (cycle)
     cost = 0
     for i in range(len(route)):
         start = route[i]
@@ -112,13 +133,23 @@ def routeCost(route,times):
 
 
   
-def generate(n, index):    
+def generate(n, index, mode = 'w'):  
+
+    # inputs:
+    #   n - int: total number of routes to have at the end of the process
+    #   index - int: which column of the demand data spreadsheet to use
+    #   mode - either 'w' or 'w+' for creating a new sheet or appending
+
+
+    filename = 'routes' + str(index) + '.csv'
+    #   mode - either 'w' for overwrite file or 'w+' to append to file  
+    random.seed(263)
     dist = 55
-    maxTries = 200
+    maxTries = 600
     routesToGen = n # will slightly overshoot (10-15 routes)
     timedata = np.genfromtxt("WoolworthsTravelDurations.csv", delimiter = ',')[1:,1:]
     
-    demands = np.genfromtxt("demandestimationsfinal.csv", delimiter = ",")[1:,index]
+    demands = np.genfromtxt("demandestimationsfinalint.csv", delimiter = ",")[1:,index]
     # add zero demand for dist center to make things eaiser
     demands = np.insert(demands, dist, 0)
     #print(times[55]) #check loading worked as expected
@@ -140,6 +171,12 @@ def generate(n, index):
     routes = []
     listofClusters = []
 
+    if mode == 'w+':
+        routeData = pd.read_csv("routes"+str(index)+".csv")
+        strRoutes = list(routeData['route'])
+        routes = [ [int(x) for x in r[1:-1].split(',')] for r in strRoutes if (r[0] == '[')] # turn a string of a list into a list
+        costs = list(routeData['cost'])[65:]
+
     while len(routes) < routesToGen:
         _, cluster = enRoutes(times,demands)
         nonDupeclusters = [c for c in cluster if (not (c in listofClusters))]
@@ -155,20 +192,20 @@ def generate(n, index):
             cost += totalDemand*7.5*60
             cost = np.ceil(cost/60)*60 # round up to the minute for payment - seems reasonable
 
-            if cost <= 4*3600:
+            if cost <= 4*3600 and (not (route in routes)): # brackets everywhere because I don't know how the logic works
                 routes.append(route)
                 costs.append(cost)
 
         i += 1
-        if i%10 == 0:
+        if i % 25 == 0:
             print(len(routes))
             if i > maxTries:
                 print("Maximum Tries Reached - Routes Generated: " + str(len(routes)))
                 break
 
         
-
-    with open('routes.csv', 'w', newline='') as f:
+    
+    with open(filename, mode, newline='') as f:
         w = csv.writer(f)
         
         # writing the header line that includes the name of all the stores
@@ -177,6 +214,17 @@ def generate(n, index):
         line.insert(0,'route')
         line.insert(1,'cost')
         w.writerow(line)
+
+        # safety valve routes
+        if mode == 'w':
+            for i in range(numStores):
+                
+                bools = [False]*(numStores-1)
+                if i < 55: bools[i] = True
+                else: bools[i-1] = True
+                line = ["!!"+str(i)] + [16000000] + bools # $100,000 for easy determination of how many are used
+                if i != dist:
+                    w.writerow(line)
 
 
         for i in range(len(routes)):
@@ -187,17 +235,11 @@ def generate(n, index):
             line = [routes[i]] + [costs[i]] + bools
 
             w.writerow(line)
-        # safety valve
-        for i in range(numStores):
-            
-            bools = [False]*(numStores-1)
-            if i < 55: bools[i] = True
-            else: bools[i-1] = True
-            line = ["!!"+str(i)] + [1600000] + bools # $100,000 for easy determination of how many are used
-            if i != dist:
-                w.writerow(line)
+
 
 
 
 if __name__ == "__main__":
-    generate(500, 1)
+    generate(1500, 4, 'w+')
+    #for i in range(1,7):
+    #    generate(1000, i)
