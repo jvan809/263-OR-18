@@ -52,8 +52,6 @@ prob.solve()
 # The status of the solution is printed to the screen
 print("Status:", LpStatus[prob.status])
 
-print("Total Number of Trucks Needed: " + str(lpSum(routeVars[route] for route in routes)))
-
 # Showing the chosen routes
 print("The chosen routes are:")
 for route in routes:
@@ -62,4 +60,5 @@ for route in routes:
         print(costs[route])
 
 # The optimised objective function value of Ingredients pue is printed to the screen    
-print("Total Cost of Distribution is $", value(prob.objective))
+cost = round(225*value(prob.objective)/3600, 2)
+print("Total Cost of Distribution is $", cost)

@@ -14,6 +14,7 @@ def enRoutes(times, demands):
     fromDist = copy(times[dist]) # times to get to places from the distribution hub
     maxDemand = 26 # might be changed to add tolerances to problem or consider larger clusters
     cutOffTime = 2000
+    temp = 1
     metalist = []
 
     numNodes = len(times)
@@ -45,7 +46,7 @@ def enRoutes(times, demands):
             # ^^ deterministic, gets stuck sometimes in weird places
 
             # better random version - could change the exponent as a 'temp'
-            n = choices(range(numNodes), weights = [ (1/(cost - np.amin(enRoute) + 1))**1 for cost in enRoute], k = 1 )[0]
+            n = choices(range(numNodes), weights = [ (1/(cost - np.amin(enRoute) + 1))**temp for cost in enRoute], k = 1 )[0]
 
 
             if fromDist[n] and (totalDemand + demands[n] <= maxDemand): # don't consider visited nodes 
@@ -117,7 +118,7 @@ def generate(n):
     routesToGen = n # will slightly overshoot (10-15 routes)
     timedata = np.genfromtxt("WoolworthsTravelDurations.csv", delimiter = ',')[1:,1:]
     
-    demands = np.genfromtxt("WoolworthsDemands.csv", delimiter = ",")[1:,1]
+    demands = np.genfromtxt("demandestimations.csv", delimiter = ",")[1:,1]
     # add zero demand for dist center to make things eaiser
     demands = np.insert(demands, dist, 0)
     #print(times[55]) #check loading worked as expected
@@ -198,4 +199,4 @@ def generate(n):
 
 
 if __name__ == "__main__":
-    generate(1000)
+    generate(5000)
