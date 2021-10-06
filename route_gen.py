@@ -112,13 +112,13 @@ def routeCost(route,times):
 
 
   
-def generate(n):    
+def generate(n, index):    
     dist = 55
     maxTries = 200
     routesToGen = n # will slightly overshoot (10-15 routes)
     timedata = np.genfromtxt("WoolworthsTravelDurations.csv", delimiter = ',')[1:,1:]
     
-    demands = np.genfromtxt("demandestimations.csv", delimiter = ",")[1:,1]
+    demands = np.genfromtxt("demandestimationsfinal.csv", delimiter = ",")[1:,index]
     # add zero demand for dist center to make things eaiser
     demands = np.insert(demands, dist, 0)
     #print(times[55]) #check loading worked as expected
@@ -199,4 +199,4 @@ def generate(n):
 
 
 if __name__ == "__main__":
-    generate(5000)
+    generate(500, 1)
