@@ -43,13 +43,14 @@ def enRoutes(times, demands):
         while totalDemand < maxDemand:
 
             #n = np.where(enRoute == np.amin(enRoute))[0][0]  # find node with shortest en route cost 
-            # ^^ deterministic, gets stuck sometime in weird places
+            # ^^ deterministic, gets stuck sometimes in weird places
 
             # better random version
             n = choices(range(numNodes), weights = [1/(cost - np.amin(enRoute) + 1) for cost in enRoute], k = 1 )[0]
 
 
-            if fromDist[n]: # don't consider visited nodes 
+            if fromDist[n] and (totalDemand + demands[n] <= maxDemand): # don't consider visited nodes 
+                                                                            # or nodes that would bring sum of demands too high
                 totalDemand += demands[n] # add this nodes demand to the total demand on this route
                 nodes.append(n) # add to list of nodes
                 fromDist[n] = 0 # remove this node from unclustered nodes
