@@ -6,6 +6,7 @@ from copy import copy
 from random import choices
 import pandas as pd
 import csv
+from bisect import bisect_left
 
 
 
@@ -163,6 +164,8 @@ def simRouteCost(route,times,demands):
 
     routeDemands = [demands[node] for node in route]
 
+    if max(routeDemands) > capacity: ValueError("A node in this route as demand exceeding a full truck - no solution possible")
+
     totalDemand = sum(routeDemands)
 
     if totalDemand <= capacity: ## case where only one truck needed
@@ -209,22 +212,30 @@ def totalCost(routes, times, demands):
     #   float: total cost in dollars for final solution
 
     truckTimes = []
-    rate = 225/3600# cost per second for internal trucks
+    maxTime = 4*3600
+    rate = 225/3600# cost per sec for internal trucks
+    maxCost = maxTime*rate # 900
+    OTrate = 50/3600 # difference in cost/s of overtime
+
+    cost = lambda time: time*rate + (time > maxTime)*(time - maxTime)*OTrate
 
     for r in routes:
         truckTimes.append(simRouteCost(r,times,demands))
 
-    if max(truckTimes) >= 4*3600: print("warning - logic is incorrect for this case")
 
-    truckCosts = [time*rate for time in truckTimes]
+    truckCosts = [cost(time) for time in truckTimes]
     truckCosts.sort()
 
     slots = 60
     wetHireCost = 2000
     hireTrucks = len(truckCosts) - slots # number of trucks needed to be hired
-    truckCosts[slots:] = [wetHireCost]*hireTrucks # replace trucks over capacity with wet hire cost
+    firstOT = bisect_left(truckCosts, maxCost)
+    underTimeCosts = truckCosts[:firstOT]
+    overTimeCosts = truckCosts[firstOT:] # length of this could be used as number of trucks that require overtime pay
+    underTimeCosts[slots:] = [wetHireCost]*hireTrucks # replace trucks costs over slots of trucks with wet hire cost
 
-    return sum(truckCosts)
+    totalCost = sum(underTimeCosts) + sum(overTimeCosts)
+    return totalCost
 
 
 
