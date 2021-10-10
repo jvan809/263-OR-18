@@ -18,7 +18,7 @@ def enRoutes(times, demands, start = -1):
     # outputs:
     #   nodeRoutes - list: based on index which cluster each node belongs to (-1 for any unassinged)
     #   metalist - list of lists: list of clusters generated
-    
+
     dist = 55 # index of the hub
     
     fromDist = copy(times[dist]) # times to get to places from the distribution hub
@@ -151,6 +151,7 @@ def generate(n, index, mode = 'w'):
 
     # notes: 
     #   using this in append mode will cause a siginificant spin-up period - maxtries may need to be increased to accomadate this.
+    #   append mode also requires the relevant file to already exist
 
 
     filename = 'routes' + str(index) + '.csv'
@@ -221,7 +222,7 @@ def generate(n, index, mode = 'w'):
         w = csv.writer(f)
         
         # writing the header line that includes the name of all the stores
-        df = pd.read_csv("demandestimations.csv")
+        df = pd.read_csv("WoolworthsDemands.csv")
         line = list(df['Store'])
         line.insert(0,'route')
         line.insert(1,'cost')
@@ -252,7 +253,5 @@ def generate(n, index, mode = 'w'):
 
 
 if __name__ == "__main__":
-    for i in range(1,7):
+    for i in range(1,3):
         generate(1000, i)
-
-    generate(1500, 4, 'w+')

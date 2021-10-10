@@ -11,11 +11,11 @@ def main(i):
         Inputs:
         -------
         i : int
-            day of the week. (i.e. 1 = Monday, 2 = Tuesday...)
+            day of the week (1 = weekdays, 2 = saturday)
     '''
 
     # fetching the names of the stores and their respective demands
-    df = pd.read_csv("demandestimations.csv")
+    df = pd.read_csv("WoolworthsDemands.csv")
     stores = list(df['Store'])
 
     # fetching the routes and their respective costs
@@ -79,7 +79,7 @@ if __name__ == "__main__":
             w = csv.writer(f)
 
 
-            for i in range(1,7):
+            for i in range(1,3):
                 # header Line
                 line = ['Route']
                 line.append('Cost ($)')
