@@ -87,7 +87,7 @@ def enRoutes(times, demands, start = -1):
 
 
         
-def groupToRoute(nodes, times):
+def groupToRoute(nodes, times, demands):
     # turns a unordered list of nodes into a ordered route
     # Inputs:
     #   nodes - list of ints: unordered cluster of nodes to find a route
@@ -110,7 +110,7 @@ def groupToRoute(nodes, times):
             for i in range(1,len(route)+1): # put the new node in every possible place (other than the start as start === end in this case)
                 testRoute = copy(route)
                 testRoute.insert(i,n)
-                cost = routeCost(testRoute, times)
+                cost = routeCost(testRoute, times, demands, unload = 0) # unload is invariant so is excluded in route finding
                 if cost < mincost:
                     mincost = cost
                     newRoute = copy(testRoute)
@@ -118,26 +118,124 @@ def groupToRoute(nodes, times):
         route = newRoute
         unvisited.pop(unvisited.index(newNode))
 
-
-    return route, mincost
+    finalCost = routeCost(route, times, demands, unload = 1) # incl unloading times for final cost 
+    return route, finalCost
 
             
 
-def routeCost(route,times):
+def routeCost(route,times, demands, unload = 1):
     # Determines the total cost of a proposed route
     # Inputs:
     #   route - list: ordered list of nodes that makes up the route
     #   times - array: transit times for every store to every other store 
+    #   demands - vector (1xn array): simulated demands for every store (incl. dist center) - can be anything is unload = 0
+    #   unload - bool: should unloading times be included?
     # Outputs:
     #   cost - float: total time taken to traverse this route (cycle)
+    unloadTime = 7.5*60 # per pallete
     cost = 0
     for i in range(len(route)):
         start = route[i]
         end = route[(i+1)%len(route)] # so the last node loops back to start
         cost += times[start][end]
+    
+
+    if unload:
+        routeDemands = [demands[node] for node in route] 
+        cost += sum(routeDemands)*unloadTime
+    
     return cost
 
+def simRouteCost(route,times,demands):
+    # determines total cost (incl. wet-hires) of a route with random demands and times
+    # Inputs:
+    #   route - list: ordered list of nodes that makes up the route (start at dist center eg. [55,25,0])
+    #   times - array: transit times for every store to every other store 
+    #   demands - vector (1xn array): simulated demands for every store (incl. dist center)
+    # Outputs:
+    #   times - list of floats: time in seconds for each truck - will generally be length one but may need to be split up based on demand
 
+    capacity = 26
+    dist = 55
+    rlen = len(route)
+    maxTime = 4*3600 # pay period for wet-hires
+
+
+    routeDemands = [demands[node] for node in route]
+
+    totalDemand = sum(routeDemands)
+
+    if totalDemand <= capacity: ## case where only one truck needed
+        cost = routeCost(route, times) # time to travel route
+        return [cost]
+
+    ## case where one truck cannot fill route
+
+
+    # check route costs for removing any one node in the route + check if they 
+    newCost = np.inf
+
+    ## i'm presently assuming that no more than one node needs to be removed
+    for i in range(1,rlen): # each node not incl dist
+        node = route(i)
+        newDemand = totalDemand - demands[node] # remove the node in consideration of route demand
+        if newDemand > capacity: continue # don't consider new routes that still don't work
+        
+        # note: this method of costing assumes that the other route will be filled by wet-hire and is therefore of fixed cost.
+        shortCost = routeCost([55, node], times, demands) # assume this is the route that is driven by our trucks
+        newRoute = route.copy()
+        newRoute.pop(i)
+        longCost = routeCost(newRoute, times, demands) # route driven by wet-hire - assume it's fixed given not exceeding max time
+
+        if (longCost <= maxTime) and (shortCost < newCost): 
+            newCost = shortCost
+            toRemove = i
+    
+    if newCost == np.inf: ValueError("Solution not found after shedding any one node - Jaqlin needs to do more work")
+
+    route.pop(toRemove)
+    longCost = routeCost(route, times, demands)
+
+    return [shortCost, longCost]
+    
+
+def totalCost(routes, times, demands):
+    # determines total cost for a solution in dollars
+    # inputs:
+    #   routes - list of lists : list of ordered lists of nodes that makes up each route (start at dist center eg. [55,25,0])
+    #   times - array: transit times for every store to every other store 
+    #   demands - vector (1xn array): simulated demands for every store (incl. dist center)
+    # outputs
+    #   float: total cost in dollars for final solution
+
+    truckTimes = []
+    rate = 225/3600# cost per second for internal trucks
+
+    for r in routes:
+        truckTimes.append(simRouteCost(r,times,demands))
+
+    if max(truckTimes) >= 4*3600: print("warning - logic is incorrect for this case")
+
+    truckCosts = [time*rate for time in truckTimes]
+    truckCosts.sort()
+
+    slots = 60
+    wetHireCost = 2000
+    hireTrucks = len(truckCosts) - slots # number of trucks needed to be hired
+    truckCosts[slots:] = [wetHireCost]*hireTrucks # replace trucks over capacity with wet hire cost
+
+    return sum(truckCosts)
+
+
+
+
+
+
+    
+
+
+
+    
   
 def generate(n, index, mode = 'w'):  
     # generates a list of potential routes and writes to a csv with routes and costs
@@ -199,10 +297,7 @@ def generate(n, index, mode = 'w'):
             if len(r) == 1:
                 continue # ignore routes that are just visiting one store and back
 
-            route, cost = groupToRoute(r,times) 
-            # add unloading times
-            totalDemand = sum([demands[n] for n in r])
-            cost += totalDemand*7.5*60
+            route, cost = groupToRoute(r, times, demands) 
             cost = np.ceil(cost/60)*60 # round up to the minute for payment - seems reasonable
 
             if cost <= 4*3600 and (not (route in routes)): # brackets everywhere because I don't know how the logic works
