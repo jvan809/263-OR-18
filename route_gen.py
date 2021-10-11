@@ -87,7 +87,6 @@ def enRoutes(times, demands, start = -1):
 
     return nodeRoutes, metalist
 
-
         
 def groupToRoute(nodes, times, demands):
     # turns a unordered list of nodes into a ordered route
@@ -122,8 +121,7 @@ def groupToRoute(nodes, times, demands):
 
     finalCost = routeCost(route, times, demands, unload = 1) # incl unloading times for final cost 
     return route, finalCost
-
-            
+        
 
 def routeCost(route,times, demands, unload = 1):
     # Determines the total cost of a proposed route
@@ -147,6 +145,7 @@ def routeCost(route,times, demands, unload = 1):
         cost += sum(routeDemands)*unloadTime
     
     return cost
+
 
 def simRouteCost(route,times,demands):
     # determines total cost (incl. wet-hires) of a route with random demands and times
@@ -237,16 +236,6 @@ def totalCost(routes, times, demands):
     totalCost = round(sum(underTimeCosts) + sum(overTimeCosts), 2)
     return totalCost, len(truckCosts), len(overTimeCosts)
 
-
-
-
-
-
-    
-
-
-
-    
   
 def generate(n, index, mode = 'w'):  
     # generates a list of potential routes and writes to a csv with routes and costs
@@ -355,8 +344,6 @@ def generate(n, index, mode = 'w'):
             w.writerow(line)
 
 
-
-
 if __name__ == "__main__":
     #for i in range(1,3):
     #    generate(1000, i)
@@ -370,7 +357,7 @@ if __name__ == "__main__":
 
     times = np.genfromtxt("WoolworthsTravelDurations.csv", delimiter = ',')[1:,1:]
     
-    demands = np.genfromtxt("demandestimationsfinalint.csv", delimiter = ",")[1:,1]
+    demands = np.genfromtxt("maxDemands.csv", delimiter = ",")[1:,1]
     demands = np.insert(demands, 55, 0)
 
 
