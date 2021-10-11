@@ -15,8 +15,10 @@ def main(i):
     '''
 
     # fetching the names of the stores and their respective demands
-    df = pd.read_csv("WoolworthsDemands.csv")
+    df = pd.read_csv("demandestimationsfinalint.csv")
     stores = list(df['Store'])
+    name = ['Weekday', 'Saturday'][i-1]
+    demands = list(df[name])
 
     # fetching the routes and their respective costs
     df = pd.read_csv("routes"+str(i)+".csv")
@@ -51,7 +53,8 @@ def main(i):
 
     # adding the constraints that each store can be visited only once
     for i, store in enumerate(stores):
-        prob += lpSum([routeVars[route] for i, route in enumerate(routes) if store in routesNamed[i]]) == 1 
+        if demands[i]: prob += lpSum([routeVars[route] for i, route in enumerate(routes) if store in routesNamed[i]]) == 1 
+        # if statement means we don't have to visit stores with no demand
 
     # solving problem
     prob.solve()

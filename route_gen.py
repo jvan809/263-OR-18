@@ -23,6 +23,7 @@ def enRoutes(times, demands, start = -1):
     dist = 55 # index of the hub
     
     fromDist = copy(times[dist]) # times to get to places from the distribution hub
+    fromDist = [times[dist][i]*(demands[i] > 0) for i in range(len(times[dist]))] # don't consider stores with 0 demand
     maxDemand = 26 # might be changed to add tolerances to problem or consider larger clusters
     cutOffTime = 2000
     temp = 1
@@ -157,7 +158,6 @@ def simRouteCost(route,times,demands):
     #   times - list of floats: time in seconds for each truck - will generally be length one but may need to be split up based on demand
 
     capacity = 26
-    dist = 55
     rlen = len(route)
     maxTime = 4*3600 # pay period for wet-hires
 
@@ -169,18 +169,17 @@ def simRouteCost(route,times,demands):
     totalDemand = sum(routeDemands)
 
     if totalDemand <= capacity: ## case where only one truck needed
-        cost = routeCost(route, times) # time to travel route
+        cost = routeCost(route, times, demands) # time to travel route
         return [cost]
 
     ## case where one truck cannot fill route
-
 
     # check route costs for removing any one node in the route + check if they 
     newCost = np.inf
 
     ## i'm presently assuming that no more than one node needs to be removed
     for i in range(1,rlen): # each node not incl dist
-        node = route(i)
+        node = route[i]
         newDemand = totalDemand - demands[node] # remove the node in consideration of route demand
         if newDemand > capacity: continue # don't consider new routes that still don't work
         
@@ -211,31 +210,32 @@ def totalCost(routes, times, demands):
     # outputs
     #   float: total cost in dollars for final solution
 
-    truckTimes = []
-    maxTime = 4*3600
-    rate = 225/3600# cost per sec for internal trucks
+    maxTime = 4*60
+    rate = 225/60# cost per min for internal trucks
     maxCost = maxTime*rate # 900
-    OTrate = 50/3600 # difference in cost/s of overtime
+    OTrate = 50/60 # difference in cost/min of overtime
 
-    cost = lambda time: time*rate + (time > maxTime)*(time - maxTime)*OTrate
+    cost = lambda time: time*rate + (time > maxTime)*(time - maxTime)*OTrate # converts times in minutes into cost in dollars for internal trucks
 
-    for r in routes:
-        truckTimes.append(simRouteCost(r,times,demands))
+    truckTimes = []
+    [truckTimes.extend(simRouteCost(r,times,demands)) for r in routes]
 
 
-    truckCosts = [cost(time) for time in truckTimes]
+    truckCosts = [cost(-(-time//60)) for time in truckTimes]
     truckCosts.sort()
 
     slots = 60
     wetHireCost = 2000
-    hireTrucks = len(truckCosts) - slots # number of trucks needed to be hired
+    hireTrucks = max(len(truckCosts) - slots,0) # number of trucks needed to be hired
     firstOT = bisect_left(truckCosts, maxCost)
     underTimeCosts = truckCosts[:firstOT]
     overTimeCosts = truckCosts[firstOT:] # length of this could be used as number of trucks that require overtime pay
+
+    if len(underTimeCosts) < hireTrucks: ValueError("Some overtime trucks need to be hired for >4 hours - logic doesn't support this")
     underTimeCosts[slots:] = [wetHireCost]*hireTrucks # replace trucks costs over slots of trucks with wet hire cost
 
-    totalCost = sum(underTimeCosts) + sum(overTimeCosts)
-    return totalCost
+    totalCost = round(sum(underTimeCosts) + sum(overTimeCosts), 2)
+    return totalCost, len(truckCosts), len(overTimeCosts)
 
 
 
@@ -269,7 +269,7 @@ def generate(n, index, mode = 'w'):
     dist = 55
     maxTries = 600
     routesToGen = n # will slightly overshoot (10-15 routes)
-    timedata = np.genfromtxt("WoolworthsTravelDurations.csv", delimiter = ',')[1:,1:]
+    times = np.genfromtxt("WoolworthsTravelDurations.csv", delimiter = ',')[1:,1:]
     
     demands = np.genfromtxt("demandestimationsfinalint.csv", delimiter = ",")[1:,index]
     # add zero demand for dist center to make things eaiser
@@ -279,7 +279,6 @@ def generate(n, index, mode = 'w'):
     locs = np.genfromtxt("WoolworthsLocations.csv", delimiter = ',')[1:,-2:]
     #locs = np.append(locs, [[x] for x in routes], axis = 1)
 
-    times = copy(timedata)
     numStores = len(times)
 
     #print(max(routes))
@@ -359,5 +358,24 @@ def generate(n, index, mode = 'w'):
 
 
 if __name__ == "__main__":
-    for i in range(1,3):
-        generate(1000, i)
+    #for i in range(1,3):
+    #    generate(1000, i)
+
+    routeData = pd.read_csv("results.csv")
+    strRoutes = list(routeData['Route'])
+    split = strRoutes.index('Route')-1 # -1 compensates for one extra row (total cost) between results
+    routes = [ [int(x) for x in r[1:-1].split(',')] for r in strRoutes if (r[0] == '[')] # turn a string of a list into a list
+    routes1 = routes[:split] # weekdays
+    routes2 = routes[split:] # saturday
+
+    times = np.genfromtxt("WoolworthsTravelDurations.csv", delimiter = ',')[1:,1:]
+    
+    demands = np.genfromtxt("demandestimationsfinalint.csv", delimiter = ",")[1:,1]
+    demands = np.insert(demands, 55, 0)
+
+
+    cost, trucks, OTTrucks = totalCost(routes1, times, demands)
+
+    print(cost)
+    print(trucks)
+    print(OTTrucks)
