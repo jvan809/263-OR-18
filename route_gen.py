@@ -225,14 +225,14 @@ def totalCost(routes, times, demands):
     truckCosts = [cost(-(-time//60)) for time in truckTimes] # ceiling divide by the minute
     truckCosts.sort()
 
-    slots = 60
+    slots = len(routes)
     wetHireCost = 2000
     hireTrucks = max(len(truckCosts) - slots,0) # number of trucks needed to be hired
     firstOT = bisect_left(truckCosts, maxCost)
     underTimeCosts = truckCosts[:firstOT]
     overTimeCosts = truckCosts[firstOT:] # length of this could be used as number of trucks that require overtime pay
 
-    if len(underTimeCosts) < hireTrucks: ValueError("Some overtime trucks need to be hired for >4 hours - logic doesn't presently support this")
+    if len(underTimeCosts) < hireTrucks: ValueError("Some wet-hire trucks need to be hired for >4 hours - logic doesn't presently support this")
     underTimeCosts[slots:] = [wetHireCost]*hireTrucks # replace trucks costs over slots of trucks with wet hire cost
 
     totalCost = round(sum(underTimeCosts) + sum(overTimeCosts), 2)
@@ -359,11 +359,11 @@ if __name__ == "__main__":
 
     times = np.genfromtxt("WoolworthsTravelDurations.csv", delimiter = ',')[1:,1:]
     
-    demands = np.genfromtxt("demandestimationsfinalint.csv", delimiter = ",")[1:,2]
+    demands = np.genfromtxt("demandestimationsfinal.csv", delimiter = ",")[1:,1]
     demands = np.insert(demands, 55, 0)
 
 
-    cost, trucks, OTTrucks = totalCost(routes2, times, demands)
+    cost, trucks, OTTrucks = totalCost(routes1, times, demands)
 
     print(cost)
     print(trucks)
