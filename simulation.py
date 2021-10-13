@@ -104,6 +104,7 @@ def main(n,day, isBoot = 0):
     RouteCosts = [0]*n
     NumTrucks  = [0]*n
     OTTrucks   = [0]*n
+    SumDemands = [0]*n
 
     # Reading in data to perform the simulation on
     routes, times = readInData(day)[0:2]
@@ -135,6 +136,8 @@ def main(n,day, isBoot = 0):
             for k in range(numLocs):
                 times[j,k] = np.random.normal(timeND[j,k,0], timeND[j,k,1], size = 1)
 
+        SumDemands[i] = sum(demands)
+
         # running cost simulation
         RouteCosts[i], NumTrucks[i], OTTrucks[i] = totalCost(routes, times, demands)
 
@@ -146,12 +149,25 @@ def main(n,day, isBoot = 0):
         index = int(n*fraction)
         print(" %1.1fth Percentile: %1.2f " % (fraction*100, RouteCosts[index])) 
 
+    # histogram of the simulated costs
     plt.hist(RouteCosts, bins = 100, density=True)
+    plt.axvline(np.mean(RouteCosts), color='k', linewidth=1)
+    if day == 1: plt.axvline(20193.75, color='r', linestyle='dashed', linewidth=1)
+    else:        plt.axvline(10800.0,  color='r', linestyle='dashed', linewidth=1)
     plt.show()
 
-    
-    
+    # histogram of the simulated demands
+    plt.hist(SumDemands, bins = 100, density=True)
+    plt.axvline(np.mean(SumDemands), color='k', linewidth=1)
+
+    # calculating average demand before random distribution
+    data = np.genfromtxt("demandestimationsfinal.csv", delimiter = ',', skip_header = 1, usecols = (1,2))[:,day-1]
+    plt.axvline(np.sum(data), color='r', linestyle='dashed', linewidth=1)
+    plt.show()
+
 
 if __name__ == "__main__":
-    main(5000,1,1)
-    main(5000,2,1)
+    # main(5000,1,1)
+    # main(5000,2,1)
+
+    main(1000,1)
