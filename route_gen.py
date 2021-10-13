@@ -128,7 +128,7 @@ def routeCost(route,times, demands, unload = 1):
     # Inputs:
     #   route - list: ordered list of nodes that makes up the route
     #   times - array: transit times for every store to every other store 
-    #   demands - vector (1xn array): simulated demands for every store (incl. dist center) - can be anything is unload = 0
+    #   demands - vector (1xn array): simulated demands for every store (incl. dist center) - can be anything if unload = 0
     #   unload - bool: should unloading times be included?
     # Outputs:
     #   cost - float: total time taken to traverse this route (cycle)
@@ -207,10 +207,12 @@ def totalCost(routes, times, demands):
     #   times - array: transit times for every store to every other store 
     #   demands - vector (1xn array): simulated demands for every store (incl. dist center)
     # outputs
-    #   float: total cost in dollars for final solution
+    #   totalCost - float: total cost in dollars for final solution
+    #   number of truck slots needed (int)
+    #   number of trucks that are over time (above 4 hours) (int)
 
-    maxTime = 4*60
-    rate = 225/60# cost per min for internal trucks
+    maxTime = 4*60 # max 4 hours of minutes before OT
+    rate = 225/60 # cost per min for internal trucks
     maxCost = maxTime*rate # 900
     OTrate = 50/60 # difference in cost/min of overtime
 
@@ -220,7 +222,7 @@ def totalCost(routes, times, demands):
     [truckTimes.extend(simRouteCost(r,times,demands)) for r in routes]
 
 
-    truckCosts = [cost(-(-time//60)) for time in truckTimes]
+    truckCosts = [cost(-(-time//60)) for time in truckTimes] # ceiling divide by the minute
     truckCosts.sort()
 
     slots = 60
@@ -230,7 +232,7 @@ def totalCost(routes, times, demands):
     underTimeCosts = truckCosts[:firstOT]
     overTimeCosts = truckCosts[firstOT:] # length of this could be used as number of trucks that require overtime pay
 
-    if len(underTimeCosts) < hireTrucks: ValueError("Some overtime trucks need to be hired for >4 hours - logic doesn't support this")
+    if len(underTimeCosts) < hireTrucks: ValueError("Some overtime trucks need to be hired for >4 hours - logic doesn't presently support this")
     underTimeCosts[slots:] = [wetHireCost]*hireTrucks # replace trucks costs over slots of trucks with wet hire cost
 
     totalCost = round(sum(underTimeCosts) + sum(overTimeCosts), 2)
@@ -357,11 +359,11 @@ if __name__ == "__main__":
 
     times = np.genfromtxt("WoolworthsTravelDurations.csv", delimiter = ',')[1:,1:]
     
-    demands = np.genfromtxt("maxDemands.csv", delimiter = ",")[1:,1]
+    demands = np.genfromtxt("demandestimationsfinalint.csv", delimiter = ",")[1:,2]
     demands = np.insert(demands, 55, 0)
 
 
-    cost, trucks, OTTrucks = totalCost(routes1, times, demands)
+    cost, trucks, OTTrucks = totalCost(routes2, times, demands)
 
     print(cost)
     print(trucks)
