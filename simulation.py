@@ -4,7 +4,6 @@ from scipy import stats
 import matplotlib.pyplot as plt
 from route_gen import *
 
-
 def readInData(day):
     '''
         This function reads in the relevant data to perform the simulation on
@@ -37,7 +36,7 @@ def readInData(day):
 
 def demandToND(day):
     '''
-        this function takes the csv file containing demands for the stores and converts them into values useful to standard deviation.
+        this function takes the csv files containing demands for the stores and converts them into values useful to standard deviation.
 
         Inputs:
         --------
@@ -62,6 +61,8 @@ def demandToND(day):
     values = np.insert(values, 55, np.array((0,0)), axis = 0)
 
     return values
+
+
 
 
 def timesToND(times, SD):
@@ -94,7 +95,7 @@ def timesToND(times, SD):
     return values
 
 
-def main(n,day):
+def main(n,day, isBoot = 0):
     '''
         This function will perform a Monte Carlo simulation
     '''
@@ -114,13 +115,19 @@ def main(n,day):
     timeND = timesToND(times, 0.05)     # choosing to have 5% SD of times.
     
     numLocs = 66
+
+    if isBoot:
+        demandvals = np.genfromtxt("WoolworthsDemands"+str(day)+".csv", delimiter = ",", skip_header = 1)[:,1:]
+        demandvals = np.insert(demandvals, 55, 0, axis = 0)  
+
     # Simulation 
     for i in range(n):
         
         # generating demands
         demands = np.zeros(numLocs)
         for j in range(numLocs):
-            demands[j] = np.random.normal(demandND[j,0], demandND[j,1], size = 1)
+            if isBoot: demands[j] = np.random.choice(demandvals[j], size=1)[0]
+            else: demands[j] = np.ceil(np.random.normal(demandND[j,0], demandND[j,1], size = 1))
 
         # generating times
         times = np.zeros([numLocs,numLocs])
@@ -146,5 +153,5 @@ def main(n,day):
     
 
 if __name__ == "__main__":
-    main(5000,1)
-    main(5000,2)
+    main(5000,1,1)
+    main(5000,2,1)
