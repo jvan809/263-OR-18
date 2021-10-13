@@ -194,8 +194,9 @@ def simRouteCost(route,times,demands):
     
     if newCost == np.inf: ValueError("Solution not found after shedding any one node - Jaqlin needs to do more work")
 
-    route.pop(toRemove)
-    longCost = routeCost(route, times, demands)
+    newRoute = copy(route)
+    newRoute.pop(toRemove)
+    longCost = routeCost(newRoute, times, demands)
 
     return [shortCost, longCost]
     

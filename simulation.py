@@ -1,4 +1,5 @@
 import numpy as np
+from numpy.random import default_rng
 import pandas as pd
 from scipy import stats
 import matplotlib.pyplot as plt
@@ -122,13 +123,14 @@ def main(n,day, isBoot = 0):
         demandvals = np.insert(demandvals, 55, 0, axis = 0)  
 
     # Simulation 
+    rng = np.random.default_rng(263)
     for i in range(n):
         
         # generating demands
         demands = np.zeros(numLocs)
         for j in range(numLocs):
-            if isBoot: demands[j] = np.random.choice(demandvals[j], size=1)[0]
-            else: demands[j] = np.ceil(np.random.normal(demandND[j,0], demandND[j,1], size = 1))
+            if isBoot: demands[j] = rng.choice(demandvals[j], size=1)[0]
+            else: demands[j] = np.ceil(rng.normal(demandND[j,0], demandND[j,1], size = 1))
 
         # generating times
         times = np.zeros([numLocs,numLocs])
@@ -157,17 +159,15 @@ def main(n,day, isBoot = 0):
     plt.show()
 
     # histogram of the simulated demands
-    plt.hist(SumDemands, bins = 100, density=True)
-    plt.axvline(np.mean(SumDemands), color='k', linewidth=1)
+    #plt.hist(SumDemands, bins = 100, density=True)
+    #plt.axvline(np.mean(SumDemands), color='k', linewidth=1)
 
     # calculating average demand before random distribution
-    data = np.genfromtxt("demandestimationsfinal.csv", delimiter = ',', skip_header = 1, usecols = (1,2))[:,day-1]
-    plt.axvline(np.sum(data), color='r', linestyle='dashed', linewidth=1)
-    plt.show()
+    #data = np.genfromtxt("demandestimationsfinal.csv", delimiter = ',', skip_header = 1, usecols = (1,2))[:,day-1]
+    #plt.axvline(np.sum(data), color='r', linestyle='dashed', linewidth=1)
+    #plt.show()
 
 
 if __name__ == "__main__":
-    # main(5000,1,1)
-    # main(5000,2,1)
-
-    main(1000,1)
+    main(5000,1,1)
+    main(5000,2,1)
