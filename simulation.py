@@ -96,7 +96,7 @@ def timesToND(times, SD):
     return values
 
 
-def main(n,day, isBoot = 0):
+def main(n,day, isBoot = 0, slack = 0):
     '''
         This function will perform a Monte Carlo simulation
     '''
@@ -109,6 +109,7 @@ def main(n,day, isBoot = 0):
 
     # Reading in data to perform the simulation on
     routes, times = readInData(day)[0:2]
+    routes += [[0]]*slack
 
     # Creating a normal distribution of demands. 
     demandND = demandToND(day)
@@ -144,12 +145,18 @@ def main(n,day, isBoot = 0):
         RouteCosts[i], NumTrucks[i], OTTrucks[i] = totalCost(routes, times, demands)
 
         if (i % int(n/20)) == 0:
-            print("%5.1f percent done" % (i/n*100))
+            print("%3.0f percent done" % (i/n*100))
  
     RouteCosts.sort()
     for fraction in [0.025,0.5,0.975]:
         index = int(n*fraction)
         print(" %1.1fth Percentile: %1.2f " % (fraction*100, RouteCosts[index])) 
+
+    print("Mean: %1.1f" % np.mean(RouteCosts))
+
+    for i in range(max(NumTrucks)):
+        if i in NumTrucks:
+            print( "%1.0i Trucks: %3.2f percent" % (i, sum([i==t for t in NumTrucks])/len(NumTrucks)*100) )
 
     # histogram of the simulated costs
     plt.hist(RouteCosts, bins = 100, density=True)
@@ -169,5 +176,6 @@ def main(n,day, isBoot = 0):
 
 
 if __name__ == "__main__":
-    main(5000,1,1)
-    main(5000,2,1)
+    print("WARNING: This will take ~10 min to complete")
+    main(20000,1,1)
+    main(20000,2,1)

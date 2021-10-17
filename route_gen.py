@@ -156,6 +156,8 @@ def simRouteCost(route,times,demands):
     # Outputs:
     #   times - list of floats: time in seconds for each truck - will generally be length one but may need to be split up based on demand
 
+    if route == [0]: return [] # add capability to consider 'slack' trucks that are avalible but not presently used
+
     capacity = 26
     rlen = len(route)
     maxTime = 4*3600 # pay period for wet-hires
@@ -360,11 +362,11 @@ if __name__ == "__main__":
 
     times = np.genfromtxt("WoolworthsTravelDurations.csv", delimiter = ',')[1:,1:]
     
-    demands = np.genfromtxt("demandestimationsfinal.csv", delimiter = ",")[1:,1]
+    demands = np.genfromtxt("demandestimationsfinal.csv", delimiter = ",")[1:,2]
     demands = np.insert(demands, 55, 0)
 
 
-    cost, trucks, OTTrucks = totalCost(routes1, times, demands)
+    cost, trucks, OTTrucks = totalCost(routes2, times, demands)
 
     print(cost)
     print(trucks)
