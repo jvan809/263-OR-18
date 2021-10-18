@@ -194,7 +194,7 @@ def simRouteCost(route,times,demands):
             newCost = shortCost
             toRemove = i
     
-    if newCost == np.inf: ValueError("Solution not found after shedding any one node - Jaqlin needs to do more work")
+    if newCost == np.inf: ValueError("Solution not found after shedding any one node")
 
     newRoute = copy(route)
     newRoute.pop(toRemove)
@@ -350,8 +350,8 @@ def generate(n, index, mode = 'w'):
 
 
 if __name__ == "__main__":
-    #for i in range(1,3):
-    #    generate(1000, i)
+    for i in range(1,3):
+        generate(1000, i)
 
     routeData = pd.read_csv("results.csv")
     strRoutes = list(routeData['Route'])

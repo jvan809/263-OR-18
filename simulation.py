@@ -96,23 +96,35 @@ def timesToND(times, SD):
     return values
 
 
-def main(n,day, isBoot = 0, slack = 0):
+def main(n,day, isBoot = 0, slack = 0, isMerge = 0):
     '''
         This function will perform a Monte Carlo simulation
+
+        Closing store 13 to merge with 2 and store 34 to merge with 52
     '''
+    mergeStores = [(13,2),(34,52)]
 
     # Initialising arrays for the cost of routes, number of trucks and overtime trucks
     RouteCosts = [0]*n
     NumTrucks  = [0]*n
     OTTrucks   = [0]*n
     SumDemands = [0]*n
+    if slack: CompCosts = [0]*n
 
     # Reading in data to perform the simulation on
     routes, times = readInData(day)[0:2]
-    routes += [[0]]*slack
 
     # Creating a normal distribution of demands. 
     demandND = demandToND(day)
+    if isMerge:
+        for x in mergeStores:
+            close = x[0]
+            merge = x[1]
+            demandND[merge][0] += demandND[close][0]
+            demandND[close] = np.array((0,0))
+
+
+
 
     # Creating a normal distribution of travel times.
     timeND = timesToND(times, 0.05)     # choosing to have 5% SD of times.
@@ -122,6 +134,14 @@ def main(n,day, isBoot = 0, slack = 0):
     if isBoot:
         demandvals = np.genfromtxt("WoolworthsDemands"+str(day)+".csv", delimiter = ",", skip_header = 1)[:,1:]
         demandvals = np.insert(demandvals, 55, 0, axis = 0)  
+        if isMerge:
+            for x in mergeStores: # can add more stores here if desired
+                close = x[0]
+                merge = x[1]
+                demandvals[merge] = [demandvals[merge][i] + demandvals[close][i] - 1 for i in range(len(demandvals[merge]))]
+                demandvals[close] = [0]*len(demandvals[merge])
+
+                        
 
     # Simulation 
     rng = np.random.default_rng(263)
@@ -142,27 +162,33 @@ def main(n,day, isBoot = 0, slack = 0):
         SumDemands[i] = sum(demands)
 
         # running cost simulation
-        RouteCosts[i], NumTrucks[i], OTTrucks[i] = totalCost(routes, times, demands)
+        RouteCosts[i], NumTrucks[i], OTTrucks[i] = totalCost(routes + [[0]]*(slack-2), times, demands)
+
+        if slack: CompCosts[i], x, x = totalCost(routes + [[0]]*slack, times, demands) 
 
         if (i % int(n/20)) == 0:
             print("%3.0f percent done" % (i/n*100))
  
+    if slack:
+        diffCosts = [(RouteCosts[i] - CompCosts[i]) for i in range(n)]
+        RouteCosts = [sum(diffCosts[i:i+20]) for i in range(n//20)]
+
     RouteCosts.sort()
     for fraction in [0.025,0.5,0.975]:
-        index = int(n*fraction)
+        index = int(len(RouteCosts)*fraction)
         print(" %1.1fth Percentile: %1.2f " % (fraction*100, RouteCosts[index])) 
 
     print("Mean: %1.1f" % np.mean(RouteCosts))
 
     for i in range(max(NumTrucks)):
         if i in NumTrucks:
-            print( "%1.0i Trucks: %3.2f percent" % (i, sum([i==t for t in NumTrucks])/len(NumTrucks)*100) )
+            print( "%1.0i Routes: %3.2f percent" % (i, sum([i==t for t in NumTrucks])/len(NumTrucks)*100) )
 
     # histogram of the simulated costs
     plt.hist(RouteCosts, bins = 100, density=True)
     plt.axvline(np.mean(RouteCosts), color='k', linewidth=1)
-    if day == 1: plt.axvline(20193.75, color='r', linestyle='dashed', linewidth=1)
-    else:        plt.axvline(10800.0,  color='r', linestyle='dashed', linewidth=1)
+    if day == 1: plt.axvline(20122.50, color='r', linestyle='dashed', linewidth=1)
+    else:        plt.axvline(10695.00,  color='r', linestyle='dashed', linewidth=1)
     plt.show()
 
     # histogram of the simulated demands
@@ -176,6 +202,10 @@ def main(n,day, isBoot = 0, slack = 0):
 
 
 if __name__ == "__main__":
-    print("WARNING: This will take ~10 min to complete")
-    main(20000,1,1)
-    main(20000,2,1)
+    print("WARNING: This will take ~20 min to complete")
+    main(20000,1,1,isMerge=0)
+    main(20000,1,1,isMerge=1)
+    main(20000,2,1,isMerge=0)
+    main(20000,2,1,isMerge=1)
+
+    #main(1000,2,1)

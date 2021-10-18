@@ -27,8 +27,6 @@ Countdown Manukau Mall,5,2,3,5
 Countdown Manurewa,4,2,6,2
 Countdown Meadowbank,3,5,4,5
 Countdown Meadowlands,3,3,2,4
-Countdown Metro Albert Street,0,0,0,0
-Countdown Metro Halsey Street,0,0,0,0
 Countdown Milford,2,3,3,6
 Countdown Mt Eden,5,3,6,5
 Countdown Mt Roskill,4,5,2,6
@@ -54,6 +52,8 @@ Countdown Te Atatu South,5,4,2,3
 Countdown Three Kings,2,4,4,6
 Countdown Victoria Street West,5,5,2,4
 Countdown Westgate,5,6,5,6
+Countdown Metro Albert Street,0,0,0,0
+Countdown Metro Halsey Street,0,0,0,0
 FreshChoice Glen Eden,0,0,0,0
 FreshChoice Half Moon Bay,0,0,0,0
 FreshChoice Mangere Bridge,0,0,0,0
