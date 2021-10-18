@@ -158,6 +158,13 @@ def simRouteCost(route,times,demands):
 
     if route == [0]: return [] # add capability to consider 'slack' trucks that are avalible but not presently used
 
+    cleanRoute = [55]
+    for r in route[1:]: # remove from route any nodes with no demand
+        if demands[r] > 0:
+            cleanRoute.append(r)
+    
+    route = copy(cleanRoute)
+
     capacity = 26
     rlen = len(route)
     maxTime = 4*3600 # pay period for wet-hires
@@ -350,8 +357,8 @@ def generate(n, index, mode = 'w'):
 
 
 if __name__ == "__main__":
-    for i in range(1,3):
-        generate(1000, i)
+    #for i in range(1,3):
+    #    generate(1000, i)
 
     routeData = pd.read_csv("results.csv")
     strRoutes = list(routeData['Route'])

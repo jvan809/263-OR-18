@@ -162,25 +162,29 @@ def main(n,day, isBoot = 0, slack = 0, isMerge = 0):
         SumDemands[i] = sum(demands)
 
         # running cost simulation
-        RouteCosts[i], NumTrucks[i], OTTrucks[i] = totalCost(routes + [[0]]*(slack-2), times, demands)
+        RouteCosts[i], NumTrucks[i], OTTrucks[i] = totalCost(routes + [[0]]*(slack), times, demands)
 
-        if slack: CompCosts[i], x, x = totalCost(routes + [[0]]*slack, times, demands) 
+        if slack: CompCosts[i], x, x = totalCost(routes + [[0]]*(slack-2), times, demands) 
 
-        if (i % int(n/20)) == 0:
+        if (i % 200) == 0:
             print("%3.0f percent done" % (i/n*100))
  
-    if slack:
-        diffCosts = [(RouteCosts[i] - CompCosts[i]) for i in range(n)]
-        RouteCosts = [sum(diffCosts[i:i+20]) for i in range(n//20)]
+    if slack >= 3:
+        diffCosts = [(CompCosts[i] - RouteCosts[i]) for i in range(n)]
+        RouteCosts = [sum(diffCosts[i*20:i*20+20]) for i in range(n//20)]
+        print(max(diffCosts))
+        print(max(RouteCosts))
 
     RouteCosts.sort()
     for fraction in [0.025,0.5,0.975]:
         index = int(len(RouteCosts)*fraction)
         print(" %1.1fth Percentile: %1.2f " % (fraction*100, RouteCosts[index])) 
 
+    print(max(RouteCosts))
+
     print("Mean: %1.1f" % np.mean(RouteCosts))
 
-    for i in range(max(NumTrucks)):
+    for i in range(max(NumTrucks)+1):
         if i in NumTrucks:
             print( "%1.0i Routes: %3.2f percent" % (i, sum([i==t for t in NumTrucks])/len(NumTrucks)*100) )
 
@@ -202,10 +206,7 @@ def main(n,day, isBoot = 0, slack = 0, isMerge = 0):
 
 
 if __name__ == "__main__":
-    print("WARNING: This will take ~20 min to complete")
-    main(20000,1,1,isMerge=0)
-    main(20000,1,1,isMerge=1)
-    main(20000,2,1,isMerge=0)
-    main(20000,2,1,isMerge=1)
+    main(1000,1,1,isMerge=0, slack=1) # 13 trucks will give 1 slack
+    main(1000,2,1,isMerge=0, slack=1)
 
-    #main(1000,2,1)
+
