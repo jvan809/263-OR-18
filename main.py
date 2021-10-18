@@ -169,7 +169,7 @@ def main(n,day, isBoot = 0, slack = 0, isMerge = 0):
         if (i % 200) == 0:
             print("%3.0f percent done" % (i/n*100))
  
-    if slack >= 5:
+    if slack >= 3:
         diffCosts = [(CompCosts[i] - RouteCosts[i]) for i in range(n)]
         RouteCosts = [sum(diffCosts[i*20:i*20+20]) for i in range(n//20)]
         print(max(diffCosts))
@@ -206,9 +206,8 @@ def main(n,day, isBoot = 0, slack = 0, isMerge = 0):
 
 
 if __name__ == "__main__":
-    for s in range(3,5):
-        main(1000,1,1,isMerge=0, slack=s) # 13 trucks will give 1 slack
-
+    #example histogram generation - not complete code for histograms in reports
+    main(1000,1,1,isMerge=0, slack=1) # 13 trucks will give 1 slack
     main(1000,2,1,isMerge=0, slack=1)
 
 
