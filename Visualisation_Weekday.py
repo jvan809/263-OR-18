@@ -94,6 +94,9 @@ folium.PolyLine(locations = [list(reversed(coord)) for coord in route ['features
 route = client.directions(coordinates = [coords[55], coords[17], coords[60], coords[55]], profile = 'driving-hgv', format = 'geojson', validate = False)
 folium.PolyLine(locations = [list(reversed(coord)) for coord in route ['features'][0]['geometry']['coordinates']]).add_to(m)
 
+route = client.directions(coordinates = [coords[55], coords[47], coords[14], coords[55]], profile = 'driving-hgv', format = 'geojson', validate = False)
+folium.PolyLine(locations = [list(reversed(coord)) for coord in route ['features'][0]['geometry']['coordinates']]).add_to(m)
+
 route = client.directions(coordinates = [coords[55], coords[20], coords[28], coords[55]], profile = 'driving-hgv', format = 'geojson', validate = False)
 folium.PolyLine(locations = [list(reversed(coord)) for coord in route ['features'][0]['geometry']['coordinates']]).add_to(m)
 
